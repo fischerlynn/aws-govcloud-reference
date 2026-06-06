@@ -84,6 +84,14 @@ data "aws_iam_policy_document" "github_deploy" {
       "lambda:AddPermission",
       "lambda:RemovePermission",
       "lambda:GetPolicy",
+      # The provider reads these per-function config endpoints on every refresh.
+      # Like the S3 case, they are not implied by GetFunction, so each missing
+      # one fails the plan with AccessDenied (e.g. GetFunctionCodeSigningConfig).
+      "lambda:GetFunctionCodeSigningConfig",
+      "lambda:GetFunctionConcurrency",
+      "lambda:GetFunctionEventInvokeConfig",
+      "lambda:GetRuntimeManagementConfig",
+      "lambda:GetFunctionUrlConfig",
     ]
     resources = [
       "arn:${local.partition}:lambda:${local.region}:${local.account_id}:function:${var.project}-*",
