@@ -1,0 +1,17 @@
+###############################################################################
+# Example tfvars - copy to terraform.tfvars and fill in.
+#
+#   cp terraform.tfvars.example terraform.tfvars
+###############################################################################
+
+# Region to deploy into (default us-east-1 if omitted).
+aws_region = "us-east-1"
+
+# GitHub repo (org/repo) allowed to assume the OIDC deploy role.
+github_repo = "fischerlynn/aws-govcloud-reference"
+
+# Optional overrides:
+# project                   = "aws-govcloud-reference"
+# environment               = "dev"
+# owner                     = "FischerLynn LLC"
+# lambda_log_retention_days = 14

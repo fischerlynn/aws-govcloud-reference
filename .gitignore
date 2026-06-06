@@ -427,3 +427,26 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# ---------------------------------------------------------------------------
+# Terraform (added for this reference) — NEVER commit state or real tfvars
+# ---------------------------------------------------------------------------
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars            # may hold account-specific values
+!*.tfvars.example   # ...but keep the example
+*.tfplan
+tfplan
+plan.txt
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+# build artifacts
+terraform/src/*.zip
+*.zip
