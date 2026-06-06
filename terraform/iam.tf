@@ -130,6 +130,22 @@ data "aws_iam_policy_document" "github_deploy" {
     ]
   }
 
+  # Terraform remote-state locking: the S3 backend reads/writes a single lock
+  # item in the DynamoDB lock table. Data-plane actions, scoped to the lock
+  # table only (NOT the app table).
+  statement {
+    sid    = "TerraformStateLock"
+    effect = "Allow"
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:DeleteItem",
+    ]
+    resources = [
+      "arn:${local.partition}:dynamodb:${local.region}:${local.account_id}:table/${var.project}-tflock",
+    ]
+  }
+
   # S3: manage the project's buckets (app bucket + state bucket prefix).
   statement {
     sid    = "S3Manage"
@@ -192,6 +208,26 @@ data "aws_iam_policy_document" "github_deploy" {
     ]
     resources = [
       "arn:${local.partition}:iam::${local.account_id}:role/${var.project}-*",
+    ]
+  }
+
+  # Manage the GitHub Actions OIDC provider this stack owns. Scoped to the one
+  # well-known GitHub IdP provider ARN (read on refresh; full lifecycle so
+  # destroy/recreate stays idempotent).
+  statement {
+    sid    = "ManageGithubOidcProvider"
+    effect = "Allow"
+    actions = [
+      "iam:GetOpenIDConnectProvider",
+      "iam:CreateOpenIDConnectProvider",
+      "iam:DeleteOpenIDConnectProvider",
+      "iam:UpdateOpenIDConnectProviderThumbprint",
+      "iam:TagOpenIDConnectProvider",
+      "iam:UntagOpenIDConnectProvider",
+      "iam:ListOpenIDConnectProviderTags",
+    ]
+    resources = [
+      "arn:${local.partition}:iam::${local.account_id}:oidc-provider/token.actions.githubusercontent.com",
     ]
   }
 
