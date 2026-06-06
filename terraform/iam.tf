@@ -157,6 +157,17 @@ data "aws_iam_policy_document" "github_deploy" {
       "s3:PutBucket*",
       "s3:GetEncryptionConfiguration",
       "s3:PutEncryptionConfiguration",
+      # The AWS provider reads every bucket sub-config on refresh. These config
+      # actions have NO "Bucket" in their IAM action name, so s3:GetBucket*
+      # above does not cover them — they must be listed explicitly or the plan
+      # fails with AccessDenied (e.g. s3:GetAccelerateConfiguration).
+      "s3:GetAccelerateConfiguration",
+      "s3:GetLifecycleConfiguration",
+      "s3:GetReplicationConfiguration",
+      "s3:GetAnalyticsConfiguration",
+      "s3:GetMetricsConfiguration",
+      "s3:GetInventoryConfiguration",
+      "s3:GetIntelligentTieringConfiguration",
       "s3:GetObject",
       "s3:PutObject",
       "s3:DeleteObject",
@@ -168,14 +179,14 @@ data "aws_iam_policy_document" "github_deploy" {
     ]
   }
 
-  # CloudWatch Logs for the function and API access logs.
+  # CloudWatch Logs for the function and API access logs. Mutating actions are
+  # scoped to this project's log groups.
   statement {
     sid    = "LogsManage"
     effect = "Allow"
     actions = [
       "logs:CreateLogGroup",
       "logs:DeleteLogGroup",
-      "logs:DescribeLogGroups",
       "logs:PutRetentionPolicy",
       "logs:TagResource",
       "logs:UntagResource",
@@ -187,6 +198,16 @@ data "aws_iam_policy_document" "github_deploy" {
       "arn:${local.partition}:logs:${local.region}:${local.account_id}:log-group:/aws/lambda/${var.project}-*:*",
       "arn:${local.partition}:logs:${local.region}:${local.account_id}:log-group:/aws/apigateway/${var.project}-*:*",
     ]
+  }
+
+  # logs:DescribeLogGroups is an account-level list action: IAM evaluates it
+  # against the wildcard log-group resource, NOT individual group ARNs, so it
+  # cannot be scoped to this project's groups. Read-only, region/account bound.
+  statement {
+    sid       = "LogsDescribe"
+    effect    = "Allow"
+    actions   = ["logs:DescribeLogGroups"]
+    resources = ["arn:${local.partition}:logs:${local.region}:${local.account_id}:log-group:*"]
   }
 
   # Read IAM roles/policies the stack manages, and create/update them.
